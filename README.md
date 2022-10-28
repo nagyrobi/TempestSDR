@@ -11,9 +11,9 @@ The software consists of a library written in C, a collection of plug-ins for va
 
 Linux
 -----
-### Ubuntu 18.04.1 LTS Bionic Beaver 
-- End of Life Date: April 2023
-- ubuntu-18.04.1-desktop-amd64.iso
+### Ubuntu 20.04.5 LTS (Focal Fossa)
+- End of Life Date: April 2025
+- ubuntu-20.04.5-desktop-amd64.iso
 - https://www.ubuntu.com/
 
 #### Update, Upgrade Ubuntu
