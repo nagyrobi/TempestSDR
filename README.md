@@ -15,6 +15,7 @@ Linux
 - End of Life Date: April 2025
 - ubuntu-20.04.5-desktop-amd64.iso
 - https://www.ubuntu.com/
+- https://releases.ubuntu.com/20.04.5/
 
 #### Update, Upgrade Ubuntu
 ```
