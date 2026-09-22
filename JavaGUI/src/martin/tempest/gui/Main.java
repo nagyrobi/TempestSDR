@@ -166,6 +166,9 @@ public class Main implements TSDRLibrary.FrameReadyCallback, TSDRLibrary.Incomin
 				try {
 					Main window = new Main();
 					window.frmTempestSdr.setVisible(true);
+					if (java.util.Arrays.asList(args).contains("--maximized")) {
+						window.frmTempestSdr.setExtendedState(window.frmTempestSdr.getExtendedState() | JFrame.MAXIMIZED_BOTH);
+					}
 				} catch (Exception e) {
 					displayException(null, e);
 				}
