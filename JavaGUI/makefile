@@ -82,19 +82,20 @@ endif
 # in the parent directory with the exact same name as the plugin names. The library files
 # produced need to have the name of the plugin folder and need to be in the bin directory.
 # The default plugin file will make sure this is compatible.
+
 PLUGINS=TSDRPlugin_RawFile 
 
-ifeq ($(OSNAME),WINDOWS)
-# Windows only plugins
-PLUGINS += TSDRPlugin_Mirics TSDRPlugin_ExtIO
-else ifeq ($(OSNAME), LINUX)
+#ifeq ($(OSNAME),WINDOWS)
+## Windows only plugins
+#PLUGINS += TSDRPlugin_Mirics TSDRPlugin_ExtIO
+#else ifeq ($(OSNAME), LINUX)
 PLUGINS += TSDRPlugin_librtlsdr
-PLUGINS += TSDRPlugin_Airspy
-PLUGINS += TSDRPlugin_HackRF
+#PLUGINS += TSDRPlugin_Airspy
+#PLUGINS += TSDRPlugin_HackRF
 PLUGINS += TSDRPlugin_UHD
-else ifeq ($(OSNAME), MAC)
-PLUGINS += TSDRPlugin_UHD
-endif
+#else ifeq ($(OSNAME), MAC)
+#PLUGINS += TSDRPlugin_UHD
+#endif
 
 # USER CONFIGURATION ENDS HERE
 
