@@ -165,6 +165,7 @@ public class Main implements TSDRLibrary.FrameReadyCallback, TSDRLibrary.Incomin
 			public void run() {
 				try {
 					Main window = new Main();
+					window.applyCommandLineSource(args);
 					window.frmTempestSdr.setVisible(true);
 					if (java.util.Arrays.asList(args).contains("--maximized")) {
 						window.frmTempestSdr.setExtendedState(window.frmTempestSdr.getExtendedState() | JFrame.MAXIMIZED_BOTH);
@@ -1073,6 +1074,24 @@ public class Main implements TSDRLibrary.FrameReadyCallback, TSDRLibrary.Incomin
 		return (int) Math.round(height);
 	}
 	
+	private void applyCommandLineSource(final String[] args) {
+		String sourceName = null, sourceArgs = null;
+		for (int i = 0; i < args.length; i++) {
+			if ("--source".equals(args[i]) && i + 1 < args.length) sourceName = args[++i];
+			else if ("--source-args".equals(args[i]) && i + 1 < args.length) sourceArgs = args[++i];
+		}
+		if (sourceName == null) return;
+		for (final TSDRSource src : souces) {
+			if (src.toString().equals(sourceName)) {
+				src.setOnParameterChangedCallback(this);
+				src.setParams(sourceArgs != null ? sourceArgs : "");
+				return;
+			}
+		}
+		System.err.println("Unknown --source \"" + sourceName + "\". Available sources:");
+		for (final TSDRSource src : souces) System.err.println("  " + src.toString());
+	}
+
 	private void onPluginSelected(final TSDRSource current) {
 		
 		if (!mSdrlib.isRunning()) btnStartStop.setEnabled(false);
