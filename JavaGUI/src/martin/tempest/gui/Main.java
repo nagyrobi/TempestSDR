@@ -120,6 +120,8 @@ public class Main implements TSDRLibrary.FrameReadyCallback, TSDRLibrary.Incomin
 	private JButton btnStartStop;
 	private final TSDRLibrary mSdrlib;
 	private ImageVisualizer visualizer;
+    private final java.util.Map<java.awt.Component, java.awt.Rectangle> originalBounds = new java.util.HashMap<>();
+    private java.awt.Dimension originalContentSize;
 	private PlotVisualizer line_plotter, frame_plotter;
 	private AutoScaleVisualizer autoScaleVisualizer;
 	//private SNRVisualizer snrLevelVisualizer; to enable snr start by uncommenting this
@@ -163,7 +165,11 @@ public class Main implements TSDRLibrary.FrameReadyCallback, TSDRLibrary.Incomin
 			public void run() {
 				try {
 					Main window = new Main();
+					window.applyCommandLineSource(args);
 					window.frmTempestSdr.setVisible(true);
+					if (java.util.Arrays.asList(args).contains("--maximized")) {
+						window.frmTempestSdr.setExtendedState(window.frmTempestSdr.getExtendedState() | JFrame.MAXIMIZED_BOTH);
+					}
 				} catch (Exception e) {
 					displayException(null, e);
 				}
@@ -187,6 +193,32 @@ public class Main implements TSDRLibrary.FrameReadyCallback, TSDRLibrary.Incomin
 		mSdrlib.registerFrameReadyCallback(this);
 		mSdrlib.registerValueChangedCallback(this);
 		initialize();
+                installResizeScaling();
+	}
+	private void installResizeScaling() {
+		final java.awt.Container cp = frmTempestSdr.getContentPane();
+		cp.addComponentListener(new java.awt.event.ComponentAdapter() {
+			@Override
+			public void componentResized(java.awt.event.ComponentEvent e) {
+				if (originalContentSize == null) {
+					originalContentSize = cp.getSize();
+					for (java.awt.Component c : cp.getComponents()) {
+						originalBounds.put(c, c.getBounds());
+					}
+					return;
+				}
+				if (originalContentSize.width == 0 || originalContentSize.height == 0) return;
+				double sx = cp.getWidth()  / (double) originalContentSize.width;
+				double sy = cp.getHeight() / (double) originalContentSize.height;
+				for (java.util.Map.Entry<java.awt.Component, java.awt.Rectangle> en : originalBounds.entrySet()) {
+					java.awt.Rectangle r = en.getValue();
+					en.getKey().setBounds((int) Math.round(r.x * sx), (int) Math.round(r.y * sy),
+						(int) Math.round(r.width * sx), (int) Math.round(r.height * sy));
+				}
+				cp.revalidate();
+				cp.repaint();
+			}
+		});
 	}
 
 	/**
@@ -204,9 +236,9 @@ public class Main implements TSDRLibrary.FrameReadyCallback, TSDRLibrary.Incomin
 		frmTempestSdr.setFocusable(true);
 		frmTempestSdr.setFocusableWindowState(true);
 		frmTempestSdr.addKeyListener(keyhook);
-		frmTempestSdr.setResizable(false);
+			frmTempestSdr.setResizable(true);
 		frmTempestSdr.setTitle("TempestSDR");
-		frmTempestSdr.setBounds(100, 100, 810, 632);
+		frmTempestSdr.setBounds(0, 0, 810, 632); // (100, 100, 810, 632)
 		frmTempestSdr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmTempestSdr.addMouseListener(new MouseAdapter() {
 			@Override
@@ -1042,6 +1074,24 @@ public class Main implements TSDRLibrary.FrameReadyCallback, TSDRLibrary.Incomin
 		return (int) Math.round(height);
 	}
 	
+	private void applyCommandLineSource(final String[] args) {
+		String sourceName = null, sourceArgs = null;
+		for (int i = 0; i < args.length; i++) {
+			if ("--source".equals(args[i]) && i + 1 < args.length) sourceName = args[++i];
+			else if ("--source-args".equals(args[i]) && i + 1 < args.length) sourceArgs = args[++i];
+		}
+		if (sourceName == null) return;
+		for (final TSDRSource src : souces) {
+			if (src.toString().equals(sourceName)) {
+				src.setOnParameterChangedCallback(this);
+				src.setParams(sourceArgs != null ? sourceArgs : "");
+				return;
+			}
+		}
+		System.err.println("Unknown --source \"" + sourceName + "\". Available sources:");
+		for (final TSDRSource src : souces) System.err.println("  " + src.toString());
+	}
+
 	private void onPluginSelected(final TSDRSource current) {
 		
 		if (!mSdrlib.isRunning()) btnStartStop.setEnabled(false);
