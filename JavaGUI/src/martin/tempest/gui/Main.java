@@ -120,6 +120,8 @@ public class Main implements TSDRLibrary.FrameReadyCallback, TSDRLibrary.Incomin
 	private JButton btnStartStop;
 	private final TSDRLibrary mSdrlib;
 	private ImageVisualizer visualizer;
+    private final java.util.Map<java.awt.Component, java.awt.Rectangle> originalBounds = new java.util.HashMap<>();
+    private java.awt.Dimension originalContentSize;
 	private PlotVisualizer line_plotter, frame_plotter;
 	private AutoScaleVisualizer autoScaleVisualizer;
 	//private SNRVisualizer snrLevelVisualizer; to enable snr start by uncommenting this
@@ -187,6 +189,32 @@ public class Main implements TSDRLibrary.FrameReadyCallback, TSDRLibrary.Incomin
 		mSdrlib.registerFrameReadyCallback(this);
 		mSdrlib.registerValueChangedCallback(this);
 		initialize();
+                installResizeScaling();
+	}
+	private void installResizeScaling() {
+		final java.awt.Container cp = frmTempestSdr.getContentPane();
+		cp.addComponentListener(new java.awt.event.ComponentAdapter() {
+			@Override
+			public void componentResized(java.awt.event.ComponentEvent e) {
+				if (originalContentSize == null) {
+					originalContentSize = cp.getSize();
+					for (java.awt.Component c : cp.getComponents()) {
+						originalBounds.put(c, c.getBounds());
+					}
+					return;
+				}
+				if (originalContentSize.width == 0 || originalContentSize.height == 0) return;
+				double sx = cp.getWidth()  / (double) originalContentSize.width;
+				double sy = cp.getHeight() / (double) originalContentSize.height;
+				for (java.util.Map.Entry<java.awt.Component, java.awt.Rectangle> en : originalBounds.entrySet()) {
+					java.awt.Rectangle r = en.getValue();
+					en.getKey().setBounds((int) Math.round(r.x * sx), (int) Math.round(r.y * sy),
+						(int) Math.round(r.width * sx), (int) Math.round(r.height * sy));
+				}
+				cp.revalidate();
+				cp.repaint();
+			}
+		});
 	}
 
 	/**
@@ -204,9 +232,9 @@ public class Main implements TSDRLibrary.FrameReadyCallback, TSDRLibrary.Incomin
 		frmTempestSdr.setFocusable(true);
 		frmTempestSdr.setFocusableWindowState(true);
 		frmTempestSdr.addKeyListener(keyhook);
-		frmTempestSdr.setResizable(false);
+			frmTempestSdr.setResizable(true);
 		frmTempestSdr.setTitle("TempestSDR");
-		frmTempestSdr.setBounds(100, 100, 810, 632);
+		frmTempestSdr.setBounds(0, 0, 810, 632); // (100, 100, 810, 632)
 		frmTempestSdr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmTempestSdr.addMouseListener(new MouseAdapter() {
 			@Override
