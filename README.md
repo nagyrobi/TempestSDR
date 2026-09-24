@@ -11,41 +11,16 @@ The software consists of a library written in C, a collection of plug-ins for va
 
 Linux
 -----
-### Ubuntu 20.04.5 LTS (Focal Fossa)
-- End of Life Date: April 2025
-- ubuntu-20.04.5-desktop-amd64.iso
-- https://www.ubuntu.com/
-- https://releases.ubuntu.com/20.04.5/
-
-#### Update, Upgrade Ubuntu
-```
-sudo apt update
-sudo apt upgrade
-sudo apt dist-upgrade
-```
 
 #### Install tools, compilers and libraries
 ```
-sudo apt install vim aptitude git
-sudo apt install openjdk-8-jdk
-sudo apt install make gcc g++
-```
-
-#### Install base libraries
-```
-sudo apt install libuhd-dev libhackrf-dev librtlsdr-dev
-```
-
-#### Install libraries for Airspy
-```
-sudo apt install libairspy-dev
-```
-
-#### Install updated libraries from Ettus Research
-```
-sudo add-apt-repository ppa:ettusresearch/uhd
-sudo apt-get update
-sudo apt-get install libuhd-dev libuhd003 uhd-host
+sudo apt update
+sudo apt install git build-essential
+sudo apt install -y wget apt-transport-https gpg
+wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | sudo gpg --dearmor -o /usr/share/keyrings/adoptium.gpg
+echo "deb [signed-by=/usr/share/keyrings/adoptium.gpg] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | sudo tee /etc/apt/sources.list.d/adoptium.list
+sudo apt install temurin-8-jdk
+ls /usr/lib/jvm/
 ```
 
 #### Clone git and build
@@ -55,7 +30,7 @@ cd ~/development
 git clone https://github.com/tanpc/TempestSDR.git
 cd TempestSDR/
 make clean
-make all JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+make all JAVA_HOME=/usr/lib/jvm/temurin-8-jdk-amd64
 ```
 
 #### Run Application
@@ -63,13 +38,28 @@ make all JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 java -jar ~/development/TempestSDR/JavaGUI/JTempestSDR.jar 
 ```
 
+#### Run Application maximized
+```
+java -jar ~/development/TempestSDR/JavaGUI/JTempestSDR.jar --maximized
+```
 
-AirSpy
-------
-It provides rudimentary native support for Airspy in Linux.
-Airspy branch has been merged to master.
+#### Run Application with preselected source
+```
+java -jar ~/development/TempestSDR/JavaGUI/JTempestSDR.jar --source "USRP (via UHD)" --source-args "driver=lime,soapy=0,nchan=1"
+```
 
-Ettus
-------
-It provides updated support for Ettus SDR in Linux.
-Ettus branch has been merged to master.
+For Lime SDR
+------------
+
+#### Install the LimeSDR software stack
+```
+sudo apt install limesuite liblimesuite-dev limesuite-udev soapysdr-tools soapysdr-module-lms7 libuhd-dev uhd-host uhd-soapysdr
+
+LimeUtil --find
+SoapySDRUtil --find="driver=lime"
+SoapySDRUtil --probe="driver=lime"
+```
+In the GUI, pick the "USRP (via UHD)" source, and in the text field it exposes, enter:
+```
+driver=lime,soapy=0,nchan=1
+```

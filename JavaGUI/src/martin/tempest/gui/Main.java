@@ -102,6 +102,7 @@ public class Main implements TSDRLibrary.FrameReadyCallback, TSDRLibrary.Incomin
 	private final static String PREF_NEAREST_NEIGHBOUR = "near_neigh_rend";
 	private final static String PREF_LOW_PASS_BEFORE_SYNC = "lp_before_sync";
 	private final static String PREF_AUTOGAIN_AFTER_PROC = "auto_bf_proc";
+	private final static String PREF_INVERTED_COLOURS = "inverted_colours";
 
 	private final SpinnerModel frequency_spinner_model = new SpinnerNumberModel(new Long(prefs.getLong(PREF_FREQ, 400000000)), new Long(0), new Long(2147483647), new Long(FREQUENCY_STEP));
 	
@@ -167,6 +168,13 @@ public class Main implements TSDRLibrary.FrameReadyCallback, TSDRLibrary.Incomin
 					Main window = new Main();
 					window.applyCommandLineSource(args);
 					window.frmTempestSdr.setVisible(true);
+					if (java.util.Arrays.asList(args).contains("--autostart")) {
+						EventQueue.invokeLater(new Runnable() {
+							public void run() {
+								window.autoStartWhenReady();
+							}
+						});
+					}
 					if (java.util.Arrays.asList(args).contains("--maximized")) {
 						window.frmTempestSdr.setExtendedState(window.frmTempestSdr.getExtendedState() | JFrame.MAXIMIZED_BOTH);
 					}
@@ -356,10 +364,12 @@ public class Main implements TSDRLibrary.FrameReadyCallback, TSDRLibrary.Incomin
 		});
 		mnTweaks.add(mntmTakeSnapshot);
 		
-		chckbxmntmNewCheckItem = new JCheckBoxMenuItem("Inverted colours");
+		chckbxmntmNewCheckItem = new JCheckBoxMenuItem("Inverted colours", prefs.getBoolean(PREF_INVERTED_COLOURS, false));
+		try { mSdrlib.setInvertedColors(chckbxmntmNewCheckItem.isSelected()); } catch (Throwable t) { displayException(frmTempestSdr, t); }
 		chckbxmntmNewCheckItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				mSdrlib.setInvertedColors(chckbxmntmNewCheckItem.isSelected());
+				prefs.putBoolean(PREF_INVERTED_COLOURS, chckbxmntmNewCheckItem.isSelected());
 			}
 		});
 		mnTweaks.add(chckbxmntmNewCheckItem);
@@ -1090,6 +1100,33 @@ public class Main implements TSDRLibrary.FrameReadyCallback, TSDRLibrary.Incomin
 		}
 		System.err.println("Unknown --source \"" + sourceName + "\". Available sources:");
 		for (final TSDRSource src : souces) System.err.println("  " + src.toString());
+	}
+
+
+	private void autoStartWhenReady() {
+		if (btnStartStop.isEnabled()) {
+			clickStartAfterDelay();
+			return;
+		}
+		btnStartStop.addPropertyChangeListener("enabled", new java.beans.PropertyChangeListener() {
+			@Override
+			public void propertyChange(java.beans.PropertyChangeEvent evt) {
+				if (!Boolean.TRUE.equals(evt.getNewValue())) return;
+				btnStartStop.removePropertyChangeListener("enabled", this);
+				clickStartAfterDelay();
+			}
+		});
+	}
+
+	private void clickStartAfterDelay() {
+		final javax.swing.Timer timer = new javax.swing.Timer(1000, new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (btnStartStop.isEnabled()) btnStartStop.doClick();
+			}
+		});
+		timer.setRepeats(false);
+		timer.start();
 	}
 
 	private void onPluginSelected(final TSDRSource current) {
